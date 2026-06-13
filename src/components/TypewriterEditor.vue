@@ -227,6 +227,12 @@ watch(() => documentStore.currentDocument, (doc) => {
   }
 }, { immediate: true })
 
+watch(() => documentStore.currentDocument?.title, (newTitle) => {
+  if (newTitle !== undefined && document.activeElement !== titleInputRef.value) {
+    localTitle.value = newTitle
+  }
+})
+
 onMounted(() => {
   focusEditor()
 })

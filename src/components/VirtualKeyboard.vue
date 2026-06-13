@@ -17,7 +17,7 @@
               'key-active': activeKey === key.value,
               'key-number': key.isNumber
             }"
-            @mousedown="pressKey(key)"
+            @mousedown="pressKey(key, $event)"
             @mouseup="releaseKey"
             @mouseleave="releaseKey"
           >
@@ -34,7 +34,7 @@
               'key-wide': key.wide, 
               'key-active': activeKey === key.value 
             }"
-            @mousedown="pressKey(key)"
+            @mousedown="pressKey(key, $event)"
             @mouseup="releaseKey"
             @mouseleave="releaseKey"
           >
@@ -50,9 +50,10 @@
             :class="{ 
               'key-wide': key.wide, 
               'key-wider': key.wider,
-              'key-active': activeKey === key.value 
+              'key-active': activeKey === key.value,
+              'key-locked': key.value === 'CapsLock' && capsLockActive
             }"
-            @mousedown="pressKey(key)"
+            @mousedown="pressKey(key, $event)"
             @mouseup="releaseKey"
             @mouseleave="releaseKey"
           >
@@ -68,9 +69,10 @@
             :class="{ 
               'key-wide': key.wide, 
               'key-wider': key.wider,
-              'key-active': activeKey === key.value 
+              'key-active': activeKey === key.value || (key.value === 'Shift' && shiftActive),
+              'key-locked': key.value === 'Shift' && shiftActive
             }"
-            @mousedown="pressKey(key)"
+            @mousedown="pressKey(key, $event)"
             @mouseup="releaseKey"
             @mouseleave="releaseKey"
           >
@@ -82,7 +84,7 @@
           <div 
             class="key key-space"
             :class="{ 'key-active': activeKey === ' ' }"
-            @mousedown="pressKey({ value: ' ', label: 'Space' })"
+            @mousedown="pressKey({ value: ' ', label: 'Space' }, $event)"
             @mouseup="releaseKey"
             @mouseleave="releaseKey"
           >
@@ -108,6 +110,15 @@ const settingsStore = useSettingsStore()
 const soundStore = useSoundStore()
 
 const activeKey = ref(null)
+const shiftActive = ref(false)
+const capsLockActive = ref(false)
+
+const uppercaseMap = {
+  '`': '~', '1': '!', '2': '@', '3': '#', '4': '$', '5': '%',
+  '6': '^', '7': '&', '8': '*', '9': '(', '0': ')', '-': '_',
+  '=': '+', '[': '{', ']': '}', '\\': '|', ';': ':', "'": '"',
+  ',': '<', '.': '>', '/': '?'
+}
 
 const row1 = [
   { label: '`', value: '`', isNumber: true },
@@ -175,21 +186,189 @@ const row4 = [
   { label: 'Shift', value: 'Shift', wider: true }
 ]
 
-function pressKey(key) {
+function pressKey(key, event) {
+  if (event && event.preventDefault) {
+    event.preventDefault()
+  }
+  
   activeKey.value = key.value
   
-  if (!settingsStore.soundEnabled) return
-  soundStore.initAudio()
-  
-  if (key.value === 'Enter') {
-    soundStore.playEnterSound(settingsStore.keySoundVolume)
-  } else if (key.value === 'Backspace' || key.value === 'Delete') {
-    soundStore.playBackspaceSound(settingsStore.keySoundVolume)
-  } else if (key.value === ' ') {
-    soundStore.playKeySound(settingsStore.keySoundVolume, true)
-  } else if (key.value.length === 1) {
-    soundStore.playKeySound(settingsStore.keySoundVolume)
+  if (settingsStore.soundEnabled) {
+    soundStore.initAudio()
+    
+    if (key.value === 'Enter') {
+      soundStore.playEnterSound(settingsStore.keySoundVolume)
+    } else if (key.value === 'Backspace' || key.value === 'Delete') {
+      soundStore.playBackspaceSound(settingsStore.keySoundVolume)
+    } else if (key.value === ' ') {
+      soundStore.playKeySound(settingsStore.keySoundVolume, true)
+    } else if (key.value.length === 1) {
+      soundStore.playKeySound(settingsStore.keySoundVolume)
+    }
   }
+  
+  if (key.value === 'Shift') {
+    shiftActive.value = !shiftActive.value
+    return
+  }
+  
+  if (key.value === 'CapsLock') {
+    capsLockActive.value = !capsLockActive.value
+    return
+  }
+  
+  let inputKeyValue = key.value
+  const isLetter = /^[a-z]$/.test(inputKeyValue)
+  const shouldUppercase = isLetter ? (shiftActive.value !== capsLockActive.value) : shiftActive.value
+  
+  if (shouldUppercase) {
+    if (isLetter) {
+      inputKeyValue = inputKeyValue.toUpperCase()
+    } else if (uppercaseMap[inputKeyValue]) {
+      inputKeyValue = uppercaseMap[inputKeyValue]
+    }
+  }
+  
+  if (shiftActive.value) {
+    shiftActive.value = false
+  }
+  
+  handleVirtualKeyInput(inputKeyValue)
+}
+
+function handleVirtualKeyInput(keyValue) {
+  let activeElement = document.activeElement
+  const isEditable = activeElement && 
+    (activeElement.tagName === 'INPUT' || 
+     activeElement.tagName === 'TEXTAREA' ||
+     activeElement.isContentEditable)
+  
+  if (!isEditable) {
+    const editor = document.querySelector('.editor-textarea')
+    if (editor) {
+      editor.focus()
+      activeElement = editor
+    } else {
+      return
+    }
+  }
+  
+  const isTextInput = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA'
+  
+  if (keyValue === 'Backspace') {
+    handleBackspace(activeElement, isTextInput)
+  } else if (keyValue === 'Enter') {
+    handleEnter(activeElement, isTextInput)
+  } else if (keyValue === 'Tab') {
+    handleTab(activeElement, isTextInput)
+  } else if (keyValue === 'ArrowLeft' || keyValue === 'ArrowRight' || 
+             keyValue === 'ArrowUp' || keyValue === 'ArrowDown') {
+    handleArrowKey(activeElement, keyValue, isTextInput)
+  } else if (keyValue.length === 1) {
+    handleCharInput(activeElement, keyValue, isTextInput)
+  }
+  
+  dispatchInputEvent(activeElement)
+}
+
+function handleCharInput(element, char, isTextInput) {
+  if (isTextInput) {
+    const start = element.selectionStart
+    const end = element.selectionEnd
+    const value = element.value
+    element.value = value.substring(0, start) + char + value.substring(end)
+    element.selectionStart = element.selectionEnd = start + char.length
+  } else if (element.isContentEditable) {
+    document.execCommand('insertText', false, char)
+  }
+}
+
+function handleBackspace(element, isTextInput) {
+  if (isTextInput) {
+    const start = element.selectionStart
+    const end = element.selectionEnd
+    const value = element.value
+    
+    if (start === end && start > 0) {
+      element.value = value.substring(0, start - 1) + value.substring(end)
+      element.selectionStart = element.selectionEnd = start - 1
+    } else if (start !== end) {
+      element.value = value.substring(0, start) + value.substring(end)
+      element.selectionStart = element.selectionEnd = start
+    }
+  } else if (element.isContentEditable) {
+    document.execCommand('delete', false, null)
+  }
+}
+
+function handleEnter(element, isTextInput) {
+  if (isTextInput) {
+    if (element.tagName === 'TEXTAREA') {
+      const start = element.selectionStart
+      const end = element.selectionEnd
+      const value = element.value
+      element.value = value.substring(0, start) + '\n' + value.substring(end)
+      element.selectionStart = element.selectionEnd = start + 1
+    }
+  } else if (element.isContentEditable) {
+    document.execCommand('insertLineBreak', false, null)
+  }
+}
+
+function handleTab(element, isTextInput) {
+  if (isTextInput) {
+    const start = element.selectionStart
+    const end = element.selectionEnd
+    const value = element.value
+    const tab = '  '
+    element.value = value.substring(0, start) + tab + value.substring(end)
+    element.selectionStart = element.selectionEnd = start + tab.length
+  }
+}
+
+function handleArrowKey(element, keyValue, isTextInput) {
+  if (!isTextInput) return
+  
+  const start = element.selectionStart
+  const end = element.selectionEnd
+  const value = element.value
+  
+  if (keyValue === 'ArrowLeft') {
+    const newPos = start > 0 ? start - 1 : 0
+    element.selectionStart = element.selectionEnd = newPos
+  } else if (keyValue === 'ArrowRight') {
+    const newPos = end < value.length ? end + 1 : value.length
+    element.selectionStart = element.selectionEnd = newPos
+  } else if (keyValue === 'ArrowUp' || keyValue === 'ArrowDown') {
+    const lines = value.substring(0, start).split('\n')
+    const currentLineIndex = lines.length - 1
+    const currentLineStart = value.lastIndexOf('\n', start - 1) + 1
+    const col = start - currentLineStart
+    
+    if (keyValue === 'ArrowUp' && currentLineIndex > 0) {
+      const prevLineStart = value.lastIndexOf('\n', currentLineStart - 2) + 1
+      const prevLineEnd = currentLineStart - 1
+      const prevLineLength = prevLineEnd - prevLineStart
+      const newCol = Math.min(col, prevLineLength)
+      const newPos = prevLineStart + newCol
+      element.selectionStart = element.selectionEnd = newPos
+    } else if (keyValue === 'ArrowDown') {
+      const nextLineStart = value.indexOf('\n', end)
+      if (nextLineStart !== -1) {
+        const nextLineEnd = value.indexOf('\n', nextLineStart + 1)
+        const actualEnd = nextLineEnd !== -1 ? nextLineEnd : value.length
+        const nextLineLength = actualEnd - nextLineStart - 1
+        const newCol = Math.min(col, nextLineLength)
+        const newPos = nextLineStart + 1 + newCol
+        element.selectionStart = element.selectionEnd = newPos
+      }
+    }
+  }
+}
+
+function dispatchInputEvent(element) {
+  const event = new Event('input', { bubbles: true })
+  element.dispatchEvent(event)
 }
 
 function releaseKey() {
@@ -199,6 +378,9 @@ function releaseKey() {
 function handlePhysicalKeyDown(e) {
   const key = e.key.length === 1 ? e.key.toLowerCase() : e.key
   activeKey.value = key
+  if (e.key === 'CapsLock') {
+    capsLockActive.value = e.getModifierState('CapsLock')
+  }
 }
 
 function handlePhysicalKeyUp() {
@@ -322,6 +504,15 @@ onUnmounted(() => {
     0 1px 0 #8b7355,
     0 2px 5px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.key-locked {
+  background: linear-gradient(145deg, #e8d4b0 0%, #d4b888 50%, #c0a470 100%) !important;
+  box-shadow: 
+    0 1px 0 #6b5535,
+    0 2px 5px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 0 8px rgba(212, 165, 116, 0.4);
 }
 
 .key-number {

@@ -25,7 +25,16 @@
     </div>
     
     <div class="header-center">
-      <div class="current-title" @dblclick="editTitle">
+      <input
+        v-if="isEditingTitle"
+        ref="titleInputRef"
+        v-model="localTitle"
+        class="title-edit-input"
+        @blur="finishEditTitle"
+        @keydown="handleTitleKeydown"
+        @dblclick.stop
+      />
+      <div v-else class="current-title" @dblclick="editTitle">
         {{ documentStore.currentDocument?.title || '未命名文章' }}
       </div>
       <div v-if="documentStore.isSaving" class="saving-indicator">
@@ -74,7 +83,7 @@
 </template>
 
 <script setup>
-import { inject } from 'vue'
+import { ref, inject, nextTick, watch } from 'vue'
 import { useSettingsStore } from '../stores/settings'
 import { useDocumentStore } from '../stores/document'
 import { useSoundStore } from '../stores/sound'
@@ -87,6 +96,10 @@ const soundStore = useSoundStore()
 const toggleSettings = inject('toggleSettings')
 const toggleDocumentList = inject('toggleDocumentList')
 const enterTypingMode = inject('enterTypingMode')
+
+const isEditingTitle = ref(false)
+const titleInputRef = ref(null)
+const localTitle = ref('')
 
 function formatTime(date) {
   if (!date) return ''
@@ -125,8 +138,47 @@ function toggleFocus() {
 }
 
 function editTitle() {
-  Message.info('双击标题栏可编辑文章标题')
+  localTitle.value = documentStore.currentDocument?.title || ''
+  isEditingTitle.value = true
+  nextTick(() => {
+    if (titleInputRef.value) {
+      titleInputRef.value.focus()
+      titleInputRef.value.select()
+    }
+  })
+  if (settingsStore.soundEnabled) {
+    soundStore.playKeySound(settingsStore.keySoundVolume)
+  }
 }
+
+function finishEditTitle() {
+  isEditingTitle.value = false
+  const newTitle = localTitle.value.trim() || '未命名文章'
+  documentStore.updateTitle(newTitle)
+  documentStore.saveToStorage()
+}
+
+function handleTitleKeydown(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault()
+    finishEditTitle()
+  } else if (e.key === 'Escape') {
+    e.preventDefault()
+    isEditingTitle.value = false
+  }
+}
+
+watch(() => documentStore.currentDocument, (doc) => {
+  if (doc && !isEditingTitle.value) {
+    localTitle.value = doc.title
+  }
+}, { immediate: true })
+
+watch(() => documentStore.currentDocument?.title, (newTitle) => {
+  if (newTitle !== undefined && !isEditingTitle.value) {
+    localTitle.value = newTitle
+  }
+})
 </script>
 
 <style scoped>
@@ -218,6 +270,26 @@ function editTitle() {
 
 .current-title:hover {
   background: rgba(139, 90, 43, 0.2);
+}
+
+.title-edit-input {
+  font-size: 15px;
+  font-weight: bold;
+  color: #d4a574;
+  letter-spacing: 1px;
+  padding: 4px 12px;
+  border: 1px solid rgba(212, 165, 116, 0.5);
+  border-radius: 6px;
+  background: rgba(26, 21, 16, 0.8);
+  outline: none;
+  text-align: center;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+.title-edit-input:focus {
+  border-color: #d4a574;
+  box-shadow: 0 0 8px rgba(212, 165, 116, 0.3);
 }
 
 .saving-indicator,
