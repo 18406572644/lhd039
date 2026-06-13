@@ -70,7 +70,7 @@
                 min="0"
                 max="1"
                 step="0.01"
-                :value="getSoundVolume(sound.id)"
+                :value="ambientStore.soundVolumes[sound.id] ?? 0.5"
                 @input="onSoundVolumeChange(sound.id, $event)"
                 class="volume-slider"
               />
@@ -151,7 +151,7 @@
                   min="0"
                   max="1"
                   step="0.01"
-                  :value="getSoundVolume(sound.id)"
+                  :value="ambientStore.soundVolumes[sound.id] ?? 0.5"
                   @input="onSoundVolumeChange(sound.id, $event)"
                   class="volume-slider small-slider"
                 />
@@ -214,12 +214,6 @@ const fileInput = ref(null)
 const builtinSounds = computed(() => {
   return ambientStore.getAllSounds().filter(s => s.category !== 'custom')
 })
-
-function getSoundVolume(soundId) {
-  return ambientStore.isSoundActive(soundId)
-    ? (ambientStore.soundVolumes?.[soundId] ?? 0.5)
-    : 0.5
-}
 
 function toggleSound(soundId) {
   ambientStore.toggleSound(soundId)
