@@ -10,6 +10,12 @@
         <VirtualKeyboard v-if="settingsStore.showVirtualKeyboard" />
       </template>
     </div>
+    
+    <div v-if="settingsStore.focusMode" class="focus-exit-float-btn" @click="exitFocusMode" title="退出专注模式 (双击Esc)">
+      <span class="focus-exit-icon">✕</span>
+      <span class="focus-exit-hint">退出专注</span>
+    </div>
+    
     <SettingsModal v-if="showSettings" @close="showSettings = false" />
     <DocumentList v-if="showDocumentList" @close="showDocumentList = false" />
   </div>
@@ -40,6 +46,7 @@ const showDocumentList = ref(false)
 let autoSaveTimer = null
 let writingTimer = null
 let lastActivityTime = Date.now()
+let lastEscPressTime = 0
 
 provide('openSettings', () => { showSettings.value = true })
 provide('openDocumentList', () => { showDocumentList.value = true })
@@ -79,6 +86,21 @@ function handleKeydown(e) {
     e.preventDefault()
     settingsStore.toggleFocusMode()
   }
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    const now = Date.now()
+    if (now - lastEscPressTime < 500) {
+      if (settingsStore.focusMode) {
+        settingsStore.toggleFocusMode()
+        if (settingsStore.soundEnabled) {
+          soundStore.playBellSound(settingsStore.pageSoundVolume * 0.3)
+        }
+      }
+      lastEscPressTime = 0
+    } else {
+      lastEscPressTime = now
+    }
+  }
   if (e.ctrlKey && e.key === 's') {
     e.preventDefault()
     documentStore.saveToStorage()
@@ -88,6 +110,15 @@ function handleKeydown(e) {
     showSettings.value = !showSettings.value
   }
   handleActivity()
+}
+
+function exitFocusMode() {
+  if (settingsStore.focusMode) {
+    settingsStore.toggleFocusMode()
+    if (settingsStore.soundEnabled) {
+      soundStore.playBellSound(settingsStore.pageSoundVolume * 0.3)
+    }
+  }
 }
 
 function exitTypingMode() {
@@ -119,6 +150,7 @@ onUnmounted(() => {
   height: 100%;
   background: linear-gradient(135deg, #2c241b 0%, #1a1510 50%, #0d0a08 100%);
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .main-content {
@@ -135,5 +167,56 @@ onUnmounted(() => {
 
 .focus-mode {
   background: radial-gradient(ellipse at center, #1a1510 0%, #0a0806 100%);
+}
+
+.focus-exit-float-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(212, 165, 116, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(212, 165, 116, 0.3);
+  border-radius: 24px;
+  color: #d4a574;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: fadeIn 0.5s ease;
+}
+
+.focus-exit-float-btn:hover {
+  background: rgba(212, 165, 116, 0.3);
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(212, 165, 116, 0.3);
+}
+
+.focus-exit-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.focus-exit-hint {
+  font-family: 'Courier Prime', 'Courier New', monospace;
+  letter-spacing: 1px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

@@ -39,7 +39,7 @@ export const useSettingsStore = defineStore('settings', () => {
         keySoundVolume.value = data.keySoundVolume ?? defaultSettings.keySoundVolume
         pageSoundVolume.value = data.pageSoundVolume ?? defaultSettings.pageSoundVolume
         showVirtualKeyboard.value = data.showVirtualKeyboard ?? defaultSettings.showVirtualKeyboard
-        focusMode.value = data.focusMode ?? defaultSettings.focusMode
+        focusMode.value = false
         fontSize.value = data.fontSize ?? defaultSettings.fontSize
         lineHeight.value = data.lineHeight ?? defaultSettings.lineHeight
         paperStyle.value = data.paperStyle ?? defaultSettings.paperStyle
@@ -60,7 +60,7 @@ export const useSettingsStore = defineStore('settings', () => {
         keySoundVolume: keySoundVolume.value,
         pageSoundVolume: pageSoundVolume.value,
         showVirtualKeyboard: showVirtualKeyboard.value,
-        focusMode: focusMode.value,
+        focusMode: false,
         fontSize: fontSize.value,
         lineHeight: lineHeight.value,
         paperStyle: paperStyle.value,

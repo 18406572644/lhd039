@@ -226,17 +226,12 @@ onUnmounted(() => {
 
 .focus-hidden {
   opacity: 0;
-  transform: translateY(100%);
-  position: absolute;
-  bottom: 40px;
-  left: 0;
-  right: 0;
+  transition: opacity 0.3s ease;
   z-index: 99;
 }
 
 .focus-hidden:hover {
   opacity: 1;
-  transform: translateY(0);
 }
 
 .keyboard-body {

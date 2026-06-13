@@ -144,17 +144,12 @@ function editTitle() {
 
 .focus-hidden {
   opacity: 0;
-  transform: translateY(-100%);
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  transition: opacity 0.3s ease;
   z-index: 100;
 }
 
 .focus-hidden:hover {
   opacity: 1;
-  transform: translateY(0);
 }
 
 .header-left,
