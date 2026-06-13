@@ -50,6 +50,24 @@ export const useDocumentStore = defineStore('document', () => {
     return newDoc
   }
 
+  function createDocumentFromTemplate(templateData) {
+    const newDoc = {
+      id: generateId(),
+      title: templateData.title || '未命名文章',
+      content: templateData.content || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      writingTime: 0,
+      lastOpenedAt: new Date().toISOString(),
+      templateId: templateData.templateId,
+      templateName: templateData.templateName
+    }
+    documents.value.unshift(newDoc)
+    currentDocId.value = newDoc.id
+    saveToStorage()
+    return newDoc
+  }
+
   function openDocument(docId) {
     const doc = documents.value.find(d => d.id === docId)
     if (doc) {
@@ -146,6 +164,7 @@ export const useDocumentStore = defineStore('document', () => {
     charCount,
     lineCount,
     createNewDocument,
+    createDocumentFromTemplate,
     openDocument,
     updateContent,
     updateTitle,

@@ -5,7 +5,7 @@
         <h2 class="modal-title">📚 我的文章</h2>
         <div class="header-actions">
           <button class="new-btn" @click="createNew">
-            <span>✏️</span> 新建
+            <span>✏️</span> 从模板创建
           </button>
           <button class="close-btn" @click="$emit('close')">✕</button>
         </div>
@@ -60,7 +60,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, inject, nextTick } from 'vue'
 import { useDocumentStore } from '../stores/document'
 import { useSettingsStore } from '../stores/settings'
 import { useSoundStore } from '../stores/sound'
@@ -71,6 +71,7 @@ const emit = defineEmits(['close'])
 const documentStore = useDocumentStore()
 const settingsStore = useSettingsStore()
 const soundStore = useSoundStore()
+const openTemplateModal = inject('openTemplateModal')
 
 const sortedDocuments = computed(() => {
   return [...documentStore.documents].sort((a, b) => 
@@ -114,12 +115,10 @@ function formatDate(dateStr) {
 }
 
 function createNew() {
-  documentStore.createNewDocument()
-  if (settingsStore.soundEnabled) {
-    soundStore.playPageTurnSound(settingsStore.pageSoundVolume)
-  }
-  Message.success('已创建新文章')
   emit('close')
+  nextTick(() => {
+    openTemplateModal()
+  })
 }
 
 function openDocument(docId) {

@@ -28,10 +28,18 @@
       
       <div 
         class="menu-item"
-        @click="createNewDoc"
+        @click="openTemplateModalHandler"
       >
-        <span class="menu-icon">✏️</span>
-        <span class="menu-text">新建文章</span>
+        <span class="menu-icon">📜</span>
+        <span class="menu-text">从模板创建</span>
+      </div>
+      
+      <div 
+        class="menu-item"
+        @click="openSaveAsTemplateModalHandler"
+      >
+        <span class="menu-icon">💾</span>
+        <span class="menu-text">另存为模板</span>
       </div>
       
       <div class="menu-divider"></div>
@@ -103,6 +111,8 @@ const typingStore = useTypingStore()
 const toggleSettings = inject('toggleSettings')
 const toggleDocumentList = inject('toggleDocumentList')
 const enterTypingMode = inject('enterTypingMode')
+const openTemplateModal = inject('openTemplateModal')
+const openSaveAsTemplateModal = inject('openSaveAsTemplateModal')
 
 const totalWritingTime = computed(() => {
   return documentStore.documents.reduce((sum, doc) => sum + (doc.writingTime || 0), 0)
@@ -126,12 +136,18 @@ function formatTime(seconds) {
   return `${minutes}分钟`
 }
 
-function createNewDoc() {
-  documentStore.createNewDocument()
+function openTemplateModalHandler() {
+  openTemplateModal()
   if (settingsStore.soundEnabled) {
-    soundStore.playPageTurnSound(settingsStore.pageSoundVolume)
+    soundStore.playPageTurnSound(settingsStore.pageSoundVolume * 0.5)
   }
-  Message.success('已创建新文章')
+}
+
+function openSaveAsTemplateModalHandler() {
+  openSaveAsTemplateModal()
+  if (settingsStore.soundEnabled) {
+    soundStore.playKeySound(settingsStore.keySoundVolume * 0.5)
+  }
 }
 
 function toggleFocus() {

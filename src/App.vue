@@ -19,6 +19,8 @@
     <SettingsModal v-if="showSettings" @close="showSettings = false" />
     <DocumentList v-if="showDocumentList" @close="showDocumentList = false" />
     <AmbientSoundPanel v-if="showAmbientPanel" @close="showAmbientPanel = false" />
+    <TemplateModal v-if="showTemplateModal" @close="showTemplateModal = false" />
+    <SaveAsTemplateModal v-if="showSaveAsTemplateModal" @close="showSaveAsTemplateModal = false" />
   </div>
 </template>
 
@@ -29,6 +31,7 @@ import { useDocumentStore } from './stores/document'
 import { useSoundStore } from './stores/sound'
 import { useTypingStore } from './stores/typing'
 import { useAmbientSoundStore } from './stores/ambientSound'
+import { useTemplateStore } from './stores/template'
 import Sidebar from './components/Sidebar.vue'
 import HeaderBar from './components/HeaderBar.vue'
 import TypewriterEditor from './components/TypewriterEditor.vue'
@@ -38,16 +41,21 @@ import SettingsModal from './components/SettingsModal.vue'
 import DocumentList from './components/DocumentList.vue'
 import TypingPractice from './components/TypingPractice.vue'
 import AmbientSoundPanel from './components/AmbientSoundPanel.vue'
+import TemplateModal from './components/TemplateModal.vue'
+import SaveAsTemplateModal from './components/SaveAsTemplateModal.vue'
 
 const settingsStore = useSettingsStore()
 const documentStore = useDocumentStore()
 const soundStore = useSoundStore()
 const typingStore = useTypingStore()
 const ambientStore = useAmbientSoundStore()
+const templateStore = useTemplateStore()
 
 const showSettings = ref(false)
 const showDocumentList = ref(false)
 const showAmbientPanel = ref(false)
+const showTemplateModal = ref(false)
+const showSaveAsTemplateModal = ref(false)
 let autoSaveTimer = null
 let writingTimer = null
 let lastActivityTime = Date.now()
@@ -60,11 +68,15 @@ provide('toggleDocumentList', () => { showDocumentList.value = !showDocumentList
 provide('enterTypingMode', () => { typingStore.enterTypingMode() })
 provide('exitTypingMode', () => { typingStore.exitTypingMode() })
 provide('toggleAmbientPanel', () => { showAmbientPanel.value = !showAmbientPanel.value })
+provide('openTemplateModal', () => { showTemplateModal.value = true })
+provide('toggleTemplateModal', () => { showTemplateModal.value = !showTemplateModal.value })
+provide('openSaveAsTemplateModal', () => { showSaveAsTemplateModal.value = true })
 
 async function initApp() {
   await settingsStore.loadSettings()
   await documentStore.loadFromStorage()
   await typingStore.loadFromStorage()
+  await templateStore.loadFromStorage()
   soundStore.initAudio()
   ambientStore.loadFromStorage()
   startTimers()
@@ -127,6 +139,14 @@ function handleKeydown(e) {
   if (e.ctrlKey && e.key === ',') {
     e.preventDefault()
     showSettings.value = !showSettings.value
+  }
+  if (e.ctrlKey && e.key === 'n') {
+    e.preventDefault()
+    showTemplateModal.value = true
+  }
+  if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+    e.preventDefault()
+    showSaveAsTemplateModal.value = true
   }
   handleActivity()
 }

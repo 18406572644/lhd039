@@ -190,3 +190,26 @@ ipcMain.handle('load-typing-history', async () => {
     return { success: false, error: error.message, data: [] }
   }
 })
+
+ipcMain.handle('save-templates', async (event, data) => {
+  try {
+    const savePath = path.join(userDataPath, 'templates.json')
+    fs.writeFileSync(savePath, JSON.stringify(data, null, 2))
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: error.message }
+  }
+})
+
+ipcMain.handle('load-templates', async () => {
+  try {
+    const savePath = path.join(userDataPath, 'templates.json')
+    if (fs.existsSync(savePath)) {
+      const data = fs.readFileSync(savePath, 'utf-8')
+      return { success: true, data: JSON.parse(data) }
+    }
+    return { success: true, data: null }
+  } catch (error) {
+    return { success: false, error: error.message, data: null }
+  }
+})

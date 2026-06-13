@@ -10,10 +10,17 @@
       </button>
       <button 
         class="header-btn"
-        @click="createNewDoc"
-        title="新建文章 (Ctrl+N)"
+        @click="openTemplateModalHandler"
+        title="从模板创建 (Ctrl+N)"
       >
-        ✏️
+        📜
+      </button>
+      <button 
+        class="header-btn"
+        @click="openSaveAsTemplateModalHandler"
+        title="另存为模板 (Ctrl+Shift+S)"
+      >
+        💾
       </button>
       <button 
         class="header-btn typing-btn"
@@ -107,6 +114,8 @@ const toggleSettings = inject('toggleSettings')
 const toggleDocumentList = inject('toggleDocumentList')
 const enterTypingMode = inject('enterTypingMode')
 const toggleAmbientPanel = inject('toggleAmbientPanel')
+const openTemplateModal = inject('openTemplateModal')
+const openSaveAsTemplateModal = inject('openSaveAsTemplateModal')
 
 const isEditingTitle = ref(false)
 const titleInputRef = ref(null)
@@ -118,12 +127,18 @@ function formatTime(date) {
   return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 }
 
-function createNewDoc() {
-  documentStore.createNewDocument()
+function openTemplateModalHandler() {
+  openTemplateModal()
   if (settingsStore.soundEnabled) {
-    soundStore.playPageTurnSound(settingsStore.pageSoundVolume)
+    soundStore.playPageTurnSound(settingsStore.pageSoundVolume * 0.5)
   }
-  Message.success('已创建新文章')
+}
+
+function openSaveAsTemplateModalHandler() {
+  openSaveAsTemplateModal()
+  if (settingsStore.soundEnabled) {
+    soundStore.playKeySound(settingsStore.keySoundVolume * 0.5)
+  }
 }
 
 function toggleSound() {
