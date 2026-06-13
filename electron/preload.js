@@ -7,5 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   loadSettings: () => ipcRenderer.invoke('load-settings'),
   exportTxt: (content, defaultName) => ipcRenderer.invoke('export-txt', content, defaultName),
   exportPdf: (htmlContent, defaultName) => ipcRenderer.invoke('export-pdf', htmlContent, defaultName),
-  toggleFullscreen: () => ipcRenderer.invoke('toggle-fullscreen')
+  toggleFullscreen: () => ipcRenderer.invoke('toggle-fullscreen'),
+  saveTypingHistory: (data) => ipcRenderer.invoke('save-typing-history', data),
+  loadTypingHistory: () => ipcRenderer.invoke('load-typing-history')
 })

@@ -1,11 +1,14 @@
 <template>
   <div class="app-container" :class="{ 'focus-mode': settingsStore.focusMode }">
-    <Sidebar v-if="!settingsStore.focusMode" />
+    <Sidebar v-if="!settingsStore.focusMode && !typingStore.isTypingMode" />
     <div class="main-content">
-      <HeaderBar />
-      <TypewriterEditor />
-      <StatusBar v-if="settingsStore.showStats" />
-      <VirtualKeyboard v-if="settingsStore.showVirtualKeyboard" />
+      <HeaderBar v-if="!typingStore.isTypingMode" />
+      <TypingPractice v-if="typingStore.isTypingMode" @exit="exitTypingMode" />
+      <template v-else>
+        <TypewriterEditor />
+        <StatusBar v-if="settingsStore.showStats" />
+        <VirtualKeyboard v-if="settingsStore.showVirtualKeyboard" />
+      </template>
     </div>
     <SettingsModal v-if="showSettings" @close="showSettings = false" />
     <DocumentList v-if="showDocumentList" @close="showDocumentList = false" />
@@ -17,6 +20,7 @@ import { ref, onMounted, onUnmounted, provide } from 'vue'
 import { useSettingsStore } from './stores/settings'
 import { useDocumentStore } from './stores/document'
 import { useSoundStore } from './stores/sound'
+import { useTypingStore } from './stores/typing'
 import Sidebar from './components/Sidebar.vue'
 import HeaderBar from './components/HeaderBar.vue'
 import TypewriterEditor from './components/TypewriterEditor.vue'
@@ -24,10 +28,12 @@ import StatusBar from './components/StatusBar.vue'
 import VirtualKeyboard from './components/VirtualKeyboard.vue'
 import SettingsModal from './components/SettingsModal.vue'
 import DocumentList from './components/DocumentList.vue'
+import TypingPractice from './components/TypingPractice.vue'
 
 const settingsStore = useSettingsStore()
 const documentStore = useDocumentStore()
 const soundStore = useSoundStore()
+const typingStore = useTypingStore()
 
 const showSettings = ref(false)
 const showDocumentList = ref(false)
@@ -39,10 +45,13 @@ provide('openSettings', () => { showSettings.value = true })
 provide('openDocumentList', () => { showDocumentList.value = true })
 provide('toggleSettings', () => { showSettings.value = !showSettings.value })
 provide('toggleDocumentList', () => { showDocumentList.value = !showDocumentList.value })
+provide('enterTypingMode', () => { typingStore.enterTypingMode() })
+provide('exitTypingMode', () => { typingStore.exitTypingMode() })
 
 async function initApp() {
   await settingsStore.loadSettings()
   await documentStore.loadFromStorage()
+  await typingStore.loadFromStorage()
   soundStore.initAudio()
   startTimers()
 }
@@ -55,7 +64,7 @@ function startTimers() {
   }, settingsStore.autoSaveInterval * 1000)
 
   writingTimer = setInterval(() => {
-    if (Date.now() - lastActivityTime < 2000) {
+    if (Date.now() - lastActivityTime < 2000 && !typingStore.isTypingMode) {
       documentStore.addWritingTime(1)
     }
   }, 1000)
@@ -81,6 +90,10 @@ function handleKeydown(e) {
   handleActivity()
 }
 
+function exitTypingMode() {
+  typingStore.exitTypingMode()
+}
+
 onMounted(() => {
   initApp()
   window.addEventListener('keydown', handleKeydown)
@@ -95,6 +108,7 @@ onUnmounted(() => {
   window.removeEventListener('mousemove', handleActivity)
   window.removeEventListener('click', handleActivity)
   documentStore.saveToStorage()
+  typingStore.saveToStorage()
 })
 </script>
 

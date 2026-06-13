@@ -9,6 +9,15 @@
     
     <div class="sidebar-menu">
       <div 
+        class="menu-item"
+        :class="{ active: typingStore.isTypingMode }"
+        @click="enterTypingMode"
+      >
+        <span class="menu-icon">⌨️</span>
+        <span class="menu-text">打字训练</span>
+      </div>
+      
+      <div 
         class="menu-item active"
         @click="toggleDocumentList"
       >
@@ -83,14 +92,17 @@ import { computed, inject } from 'vue'
 import { useSettingsStore } from '../stores/settings'
 import { useDocumentStore } from '../stores/document'
 import { useSoundStore } from '../stores/sound'
+import { useTypingStore } from '../stores/typing'
 import { Message } from '@arco-design/web-vue'
 
 const settingsStore = useSettingsStore()
 const documentStore = useDocumentStore()
 const soundStore = useSoundStore()
+const typingStore = useTypingStore()
 
 const toggleSettings = inject('toggleSettings')
 const toggleDocumentList = inject('toggleDocumentList')
+const enterTypingMode = inject('enterTypingMode')
 
 const totalWritingTime = computed(() => {
   return documentStore.documents.reduce((sum, doc) => sum + (doc.writingTime || 0), 0)

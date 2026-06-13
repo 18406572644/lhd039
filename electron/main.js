@@ -167,3 +167,26 @@ ipcMain.handle('toggle-fullscreen', async () => {
   }
   return false
 })
+
+ipcMain.handle('save-typing-history', async (event, data) => {
+  try {
+    const savePath = path.join(userDataPath, 'typing-history.json')
+    fs.writeFileSync(savePath, JSON.stringify(data, null, 2))
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: error.message }
+  }
+})
+
+ipcMain.handle('load-typing-history', async () => {
+  try {
+    const savePath = path.join(userDataPath, 'typing-history.json')
+    if (fs.existsSync(savePath)) {
+      const data = fs.readFileSync(savePath, 'utf-8')
+      return { success: true, data: JSON.parse(data) }
+    }
+    return { success: true, data: [] }
+  } catch (error) {
+    return { success: false, error: error.message, data: [] }
+  }
+})

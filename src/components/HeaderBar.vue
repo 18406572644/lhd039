@@ -15,6 +15,13 @@
       >
         ✏️
       </button>
+      <button 
+        class="header-btn typing-btn"
+        @click="enterTypingMode"
+        title="打字训练"
+      >
+        ⌨️
+      </button>
     </div>
     
     <div class="header-center">
@@ -79,6 +86,7 @@ const soundStore = useSoundStore()
 
 const toggleSettings = inject('toggleSettings')
 const toggleDocumentList = inject('toggleDocumentList')
+const enterTypingMode = inject('enterTypingMode')
 
 function formatTime(date) {
   if (!date) return ''
