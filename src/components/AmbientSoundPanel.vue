@@ -1,5 +1,5 @@
 <template>
-  <div class="ambient-panel" v-if="visible">
+  <div class="ambient-panel">
     <div class="ambient-panel-overlay" @click="handleClose"></div>
     <div class="ambient-panel-content">
       <div class="panel-header">
@@ -198,16 +198,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAmbientSoundStore } from '../stores/ambientSound'
 import { Message } from '@arco-design/web-vue'
-
-const props = defineProps({
-  visible: {
-    type: Boolean,
-    default: false
-  }
-})
 
 const emit = defineEmits(['close'])
 
@@ -324,10 +317,8 @@ function handleClose() {
   emit('close')
 }
 
-watch(() => props.visible, (val) => {
-  if (val) {
-    ambientStore.initAudioContext()
-  }
+onMounted(() => {
+  ambientStore.initAudioContext()
 })
 </script>
 

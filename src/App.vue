@@ -95,6 +95,18 @@ function handleKeydown(e) {
   }
   if (e.key === 'Escape') {
     e.preventDefault()
+    if (showAmbientPanel.value) {
+      showAmbientPanel.value = false
+      return
+    }
+    if (showSettings.value) {
+      showSettings.value = false
+      return
+    }
+    if (showDocumentList.value) {
+      showDocumentList.value = false
+      return
+    }
     const now = Date.now()
     if (now - lastEscPressTime < 500) {
       if (settingsStore.focusMode) {
