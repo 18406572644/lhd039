@@ -18,6 +18,7 @@
     
     <SettingsModal v-if="showSettings" @close="showSettings = false" />
     <DocumentList v-if="showDocumentList" @close="showDocumentList = false" />
+    <AmbientSoundPanel v-if="showAmbientPanel" @close="showAmbientPanel = false" />
   </div>
 </template>
 
@@ -27,6 +28,7 @@ import { useSettingsStore } from './stores/settings'
 import { useDocumentStore } from './stores/document'
 import { useSoundStore } from './stores/sound'
 import { useTypingStore } from './stores/typing'
+import { useAmbientSoundStore } from './stores/ambientSound'
 import Sidebar from './components/Sidebar.vue'
 import HeaderBar from './components/HeaderBar.vue'
 import TypewriterEditor from './components/TypewriterEditor.vue'
@@ -35,14 +37,17 @@ import VirtualKeyboard from './components/VirtualKeyboard.vue'
 import SettingsModal from './components/SettingsModal.vue'
 import DocumentList from './components/DocumentList.vue'
 import TypingPractice from './components/TypingPractice.vue'
+import AmbientSoundPanel from './components/AmbientSoundPanel.vue'
 
 const settingsStore = useSettingsStore()
 const documentStore = useDocumentStore()
 const soundStore = useSoundStore()
 const typingStore = useTypingStore()
+const ambientStore = useAmbientSoundStore()
 
 const showSettings = ref(false)
 const showDocumentList = ref(false)
+const showAmbientPanel = ref(false)
 let autoSaveTimer = null
 let writingTimer = null
 let lastActivityTime = Date.now()
@@ -54,12 +59,14 @@ provide('toggleSettings', () => { showSettings.value = !showSettings.value })
 provide('toggleDocumentList', () => { showDocumentList.value = !showDocumentList.value })
 provide('enterTypingMode', () => { typingStore.enterTypingMode() })
 provide('exitTypingMode', () => { typingStore.exitTypingMode() })
+provide('toggleAmbientPanel', () => { showAmbientPanel.value = !showAmbientPanel.value })
 
 async function initApp() {
   await settingsStore.loadSettings()
   await documentStore.loadFromStorage()
   await typingStore.loadFromStorage()
   soundStore.initAudio()
+  ambientStore.loadFromStorage()
   startTimers()
 }
 

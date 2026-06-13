@@ -48,6 +48,14 @@
     
     <div class="header-right">
       <button 
+        class="header-btn ambient-btn"
+        :class="{ active: ambientStore.isPlaying }"
+        @click="toggleAmbientPanel"
+        title="环境白噪音"
+      >
+        🎵
+      </button>
+      <button 
         class="header-btn"
         :class="{ active: settingsStore.soundEnabled }"
         @click="toggleSound"
@@ -87,15 +95,18 @@ import { ref, inject, nextTick, watch } from 'vue'
 import { useSettingsStore } from '../stores/settings'
 import { useDocumentStore } from '../stores/document'
 import { useSoundStore } from '../stores/sound'
+import { useAmbientSoundStore } from '../stores/ambientSound'
 import { Message } from '@arco-design/web-vue'
 
 const settingsStore = useSettingsStore()
 const documentStore = useDocumentStore()
 const soundStore = useSoundStore()
+const ambientStore = useAmbientSoundStore()
 
 const toggleSettings = inject('toggleSettings')
 const toggleDocumentList = inject('toggleDocumentList')
 const enterTypingMode = inject('enterTypingMode')
+const toggleAmbientPanel = inject('toggleAmbientPanel')
 
 const isEditingTitle = ref(false)
 const titleInputRef = ref(null)
