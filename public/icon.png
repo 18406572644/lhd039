@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <rect width="256" height="256" fill="#2c241b"/>
+  <g transform="translate(28, 60)">
+    <rect x="20" y="90" width="160" height="60" rx="8" fill="#d4a574"/>
+    <rect x="30" y="100" width="140" height="40" rx="4" fill="#f5deb3"/>
+    <rect x="0" y="40" width="200" height="60" rx="12" fill="#8b5a2b"/>
+    <rect x="15" y="52" width="28" height="36" rx="6" fill="#d4a574"/>
+    <rect x="50" y="52" width="28" height="36" rx="6" fill="#d4a574"/>
+    <rect x="85" y="52" width="28" height="36" rx="6" fill="#d4a574"/>
+    <rect x="120" y="52" width="28" height="36" rx="6" fill="#d4a574"/>
+    <rect x="155" y="52" width="35" height="36" rx="6" fill="#d4a574"/>
+    <rect x="70" y="20" width="60" height="25" rx="6" fill="#6b4423"/>
+    <circle cx="100" cy="32" r="8" fill="#d4a574"/>
+  </g>
+  <text x="128" y="220" text-anchor="middle" font-family="Courier New, monospace" font-size="28" fill="#d4a574" font-weight="bold">VINTAGE</text>
+</svg>
