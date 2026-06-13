@@ -25,18 +25,26 @@
           />
         </div>
         <div class="content-wrapper" ref="contentWrapper">
+          <div
+            v-if="isMarkdownMode"
+            class="md-render-layer"
+            ref="renderRef"
+            v-html="renderedContent"
+          ></div>
           <textarea
             ref="editorRef"
             v-model="localContent"
             class="editor-textarea"
+            :class="{ 'md-mode': isMarkdownMode }"
             :style="editorStyle"
             placeholder="开始写作，让思绪在纸张上流淌..."
             @input="handleInput"
             @keydown="handleKeydown"
             @paste="handlePaste"
+            @scroll="syncScroll"
           />
           <div 
-            v-if="settingsStore.typewriterEffect && displayContent !== localContent"
+            v-if="settingsStore.typewriterEffect && displayContent !== localContent && !isMarkdownMode"
             class="typing-cursor"
             :style="cursorStyle"
           ></div>
@@ -51,6 +59,7 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useSettingsStore } from '../stores/settings'
 import { useDocumentStore } from '../stores/document'
 import { useSoundStore } from '../stores/sound'
+import { parseMarkdown } from '../utils/markdown'
 
 const settingsStore = useSettingsStore()
 const documentStore = useDocumentStore()
@@ -59,6 +68,7 @@ const soundStore = useSoundStore()
 const editorWrapper = ref(null)
 const paperRef = ref(null)
 const editorRef = ref(null)
+const renderRef = ref(null)
 const titleInputRef = ref(null)
 const contentWrapper = ref(null)
 
@@ -69,6 +79,12 @@ const isShaking = ref(false)
 const isTypingEffect = ref(false)
 const charIndex = ref(0)
 const bellTriggered = ref(new Set())
+
+const isMarkdownMode = computed(() => settingsStore.editorMode === 'markdown')
+
+const renderedContent = computed(() => {
+  return parseMarkdown(displayContent.value)
+})
 
 const paperStyle = computed(() => ({
   '--font-size': `${settingsStore.fontSize}px`,
@@ -108,6 +124,13 @@ function focusEditor() {
   })
 }
 
+function syncScroll() {
+  if (isMarkdownMode.value && renderRef.value && editorRef.value) {
+    renderRef.value.scrollTop = editorRef.value.scrollTop
+    renderRef.value.scrollLeft = editorRef.value.scrollLeft
+  }
+}
+
 function handleTitleChange() {
   documentStore.updateTitle(localTitle.value)
   triggerSave()
@@ -124,6 +147,9 @@ function handleInput(e) {
   documentStore.updateContent(localContent.value)
   triggerSave()
   displayContent.value = localContent.value
+  nextTick(() => {
+    syncScroll()
+  })
 }
 
 function startTypingEffect() {
@@ -231,6 +257,12 @@ watch(() => documentStore.currentDocument?.title, (newTitle) => {
   if (newTitle !== undefined && document.activeElement !== titleInputRef.value) {
     localTitle.value = newTitle
   }
+})
+
+watch(isMarkdownMode, () => {
+  nextTick(() => {
+    syncScroll()
+  })
 })
 
 onMounted(() => {
@@ -383,11 +415,28 @@ onMounted(() => {
   letter-spacing: 1px;
   overflow-y: visible;
   caret-color: #8b5a2b;
+  position: relative;
+  z-index: 2;
+}
+
+.editor-textarea.md-mode {
+  color: transparent;
+  caret-color: #5c4033;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
 }
 
 .editor-textarea::placeholder {
   color: rgba(61, 43, 31, 0.4);
   font-style: italic;
+}
+
+.editor-textarea.md-mode::placeholder {
+  color: transparent;
 }
 
 .editor-textarea::-webkit-scrollbar {
@@ -401,6 +450,132 @@ onMounted(() => {
 .editor-textarea::-webkit-scrollbar-thumb {
   background: rgba(139, 90, 43, 0.3);
   border-radius: 3px;
+}
+
+.md-render-layer {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 400px;
+  color: #3d2b1f;
+  letter-spacing: 1px;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.md-render-layer :deep(.md-paragraph) {
+  margin: 0 0 var(--line-height)em 0;
+  line-height: var(--line-height);
+  font-size: var(--font-size);
+}
+
+.md-render-layer :deep(.md-paragraph.md-empty) {
+  margin: 0;
+  line-height: var(--line-height);
+}
+
+.md-render-layer :deep(.md-heading) {
+  font-weight: bold;
+  color: #3d2b1f;
+  margin: 0.5em 0 0.3em 0;
+  line-height: 1.4;
+  letter-spacing: 1px;
+}
+
+.md-render-layer :deep(.md-heading-1) {
+  font-size: calc(var(--font-size) * 2);
+  text-align: center;
+  border-bottom: 2px solid rgba(139, 90, 43, 0.3);
+  padding-bottom: 0.3em;
+  margin-bottom: 0.8em;
+}
+
+.md-render-layer :deep(.md-heading-2) {
+  font-size: calc(var(--font-size) * 1.6);
+  border-bottom: 1px solid rgba(139, 90, 43, 0.2);
+  padding-bottom: 0.2em;
+}
+
+.md-render-layer :deep(.md-heading-3) {
+  font-size: calc(var(--font-size) * 1.35);
+}
+
+.md-render-layer :deep(.md-heading-4) {
+  font-size: calc(var(--font-size) * 1.2);
+}
+
+.md-render-layer :deep(.md-heading-5) {
+  font-size: calc(var(--font-size) * 1.1);
+}
+
+.md-render-layer :deep(.md-heading-6) {
+  font-size: var(--font-size);
+  color: #5c4033;
+}
+
+.md-render-layer :deep(.md-bold) {
+  font-weight: bold;
+  color: #2a1f15;
+}
+
+.md-render-layer :deep(.md-italic) {
+  font-style: italic;
+  color: #4a3728;
+}
+
+.md-render-layer :deep(.md-strikethrough) {
+  text-decoration: line-through;
+  color: #7a6050;
+}
+
+.md-render-layer :deep(.md-inline-code) {
+  font-family: 'Courier New', Courier, monospace;
+  background: rgba(139, 90, 43, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  color: #5c4033;
+  border: 1px solid rgba(139, 90, 43, 0.2);
+}
+
+.md-render-layer :deep(.md-blockquote) {
+  margin: 0.5em 0;
+  padding: 0.5em 1em;
+  border-left: 4px solid rgba(139, 90, 43, 0.5);
+  background: rgba(139, 90, 43, 0.05);
+  color: #5c4033;
+  font-style: italic;
+}
+
+.md-render-layer :deep(.md-blockquote p) {
+  margin: 0;
+  line-height: var(--line-height);
+}
+
+.md-render-layer :deep(.md-list) {
+  margin: 0.5em 0;
+  padding-left: 1.8em;
+  line-height: var(--line-height);
+}
+
+.md-render-layer :deep(.md-ul) {
+  list-style-type: disc;
+}
+
+.md-render-layer :deep(.md-ol) {
+  list-style-type: decimal;
+}
+
+.md-render-layer :deep(.md-list-item) {
+  margin: 0.2em 0;
+  line-height: var(--line-height);
+}
+
+.md-render-layer :deep(.md-hr) {
+  border: none;
+  height: 2px;
+  background: rgba(139, 90, 43, 0.3);
+  margin: 1em 0;
 }
 
 .typing-cursor {

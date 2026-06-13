@@ -79,6 +79,14 @@
         ⌨️
       </button>
       <button 
+        class="header-btn md-btn"
+        :class="{ active: settingsStore.editorMode === 'markdown' }"
+        @click="toggleEditorMode"
+        :title="settingsStore.editorMode === 'markdown' ? 'Markdown 渲染模式' : '纯文本模式'"
+      >
+        {{ settingsStore.editorMode === 'markdown' ? '📝' : '📄' }}
+      </button>
+      <button 
         class="header-btn focus-btn"
         :class="{ active: settingsStore.focusMode }"
         @click="toggleFocus"
@@ -153,6 +161,13 @@ function toggleTypewriter() {
   settingsStore.toggleTypewriterEffect()
   if (settingsStore.soundEnabled) {
     soundStore.playKeySound(settingsStore.keySoundVolume)
+  }
+}
+
+function toggleEditorMode() {
+  settingsStore.toggleEditorMode()
+  if (settingsStore.soundEnabled) {
+    soundStore.playPageTurnSound(settingsStore.pageSoundVolume * 0.5)
   }
 }
 

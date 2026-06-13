@@ -13,6 +13,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const paperStyle = ref('vintage')
   const autoSaveInterval = ref(30)
   const showStats = ref(true)
+  const editorMode = ref('plaintext')
 
   const defaultSettings = {
     typewriterEffect: true,
@@ -25,7 +26,8 @@ export const useSettingsStore = defineStore('settings', () => {
     lineHeight: 2,
     paperStyle: 'vintage',
     autoSaveInterval: 30,
-    showStats: true
+    showStats: true,
+    editorMode: 'plaintext'
   }
 
   async function loadSettings() {
@@ -45,6 +47,7 @@ export const useSettingsStore = defineStore('settings', () => {
         paperStyle.value = data.paperStyle ?? defaultSettings.paperStyle
         autoSaveInterval.value = data.autoSaveInterval ?? defaultSettings.autoSaveInterval
         showStats.value = data.showStats ?? defaultSettings.showStats
+        editorMode.value = data.editorMode ?? defaultSettings.editorMode
       }
     } catch (error) {
       console.error('加载设置失败:', error)
@@ -65,7 +68,8 @@ export const useSettingsStore = defineStore('settings', () => {
         lineHeight: lineHeight.value,
         paperStyle: paperStyle.value,
         autoSaveInterval: autoSaveInterval.value,
-        showStats: showStats.value
+        showStats: showStats.value,
+        editorMode: editorMode.value
       })
     } catch (error) {
       console.error('保存设置失败:', error)
@@ -92,6 +96,11 @@ export const useSettingsStore = defineStore('settings', () => {
     saveSettings()
   }
 
+  function toggleEditorMode() {
+    editorMode.value = editorMode.value === 'plaintext' ? 'markdown' : 'plaintext'
+    saveSettings()
+  }
+
   return {
     typewriterEffect,
     soundEnabled,
@@ -104,11 +113,13 @@ export const useSettingsStore = defineStore('settings', () => {
     paperStyle,
     autoSaveInterval,
     showStats,
+    editorMode,
     loadSettings,
     saveSettings,
     toggleFocusMode,
     toggleSound,
     toggleTypewriterEffect,
-    toggleVirtualKeyboard
+    toggleVirtualKeyboard,
+    toggleEditorMode
   }
 })

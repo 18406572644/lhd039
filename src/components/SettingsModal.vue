@@ -45,6 +45,17 @@
           
           <div class="setting-item">
             <div class="setting-info">
+              <span class="setting-label">Markdown 渲染模式</span>
+              <span class="setting-desc">实时渲染 Markdown 语法为格式化文本</span>
+            </div>
+            <a-switch 
+              :model-value="settingsStore.editorMode === 'markdown'"
+              @change="toggleMarkdownMode"
+            />
+          </div>
+          
+          <div class="setting-item">
+            <div class="setting-info">
               <span class="setting-label">字体大小</span>
               <span class="setting-desc">调整编辑区域的文字大小</span>
             </div>
@@ -188,6 +199,15 @@ const settingsStore = useSettingsStore()
 
 function save() {
   settingsStore.saveSettings()
+}
+
+function toggleMarkdownMode(checked) {
+  if (checked) {
+    settingsStore.editorMode = 'markdown'
+  } else {
+    settingsStore.editorMode = 'plaintext'
+  }
+  save()
 }
 </script>
 
